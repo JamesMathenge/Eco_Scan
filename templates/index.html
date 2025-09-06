@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedHelp - Privacy-Focused Medical Symptom Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='medical-icon.svg') }}" type="image/svg+xml">
+    
+    <!-- Accessibility and SEO meta tags -->
+    <meta name="description" content="Privacy-focused, offline medical symptom checker providing accessible healthcare guidance for underserved communities">
+    <meta name="keywords" content="medical, symptoms, healthcare, privacy, offline, accessibility">
+    <meta name="author" content="MedHelp - For Humanity">
+    
+    <!-- Open Graph tags -->
+    <meta property="og:title" content="MedHelp - Privacy-Focused Medical Symptom Checker">
+    <meta property="og:description" content="Accessible healthcare guidance for everyone, running completely offline">
+    <meta property="og:type" content="website">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header" role="banner">
+            <div class="header-content">
+                <img src="{{ url_for('static', filename='medical-icon.svg') }}" alt="Medical stethoscope icon" class="logo" width="48" height="48">
+                <div class="header-text">
+                    <h1 class="title">MedHelp</h1>
+                    <p class="subtitle">Privacy-Focused Medical Symptom Checker</p>
+                    <p class="description">Accessible Healthcare Guidance for Everyone</p>
+                </div>
+            </div>
+        </header>
+
+        <main role="main">
+            <!-- Emergency warning banner -->
+            <div class="emergency-banner" role="alert" aria-live="polite">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <strong>Emergency Warning:</strong> If this is a medical emergency, call your local emergency services immediately (911 in US, 112 in EU)
+            </div>
+
+            <!-- Privacy notice -->
+            <div class="privacy-notice" role="complementary">
+                <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                <p><strong>Privacy First:</strong> All analysis performed locally on your device. Your medical information never leaves this device or connects to external servers.</p>
+            </div>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages" role="alert" aria-live="polite">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                {% if category == 'error' %}
+                                    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Symptom input form -->
+            <form method="POST" action="{{ url_for('analyze_symptoms') }}" class="symptom-form" role="form" aria-labelledby="form-title">
+                <h2 id="form-title" class="form-title">Describe Your Symptoms</h2>
+                
+                <div class="form-group">
+                    <label for="symptoms" class="required-label">
+                        <i class="fas fa-stethoscope" aria-hidden="true"></i>
+                        Symptom Description *
+                    </label>
+                    <div class="input-container">
+                        <textarea 
+                            id="symptoms" 
+                            name="symptoms" 
+                            class="form-control textarea-large" 
+                            placeholder="Please describe your symptoms in detail... For example: 'I have had a headache for 2 days, feeling dizzy when standing up, and mild nausea'" 
+                            required 
+                            minlength="10" 
+                            maxlength="2000"
+                            aria-describedby="symptoms-help"
+                            rows="5"></textarea>
+                        <button type="button" id="voice-btn" class="voice-button" aria-label="Use voice input to describe symptoms" title="Click to use voice input">
+                            <i class="fas fa-microphone" aria-hidden="true"></i>
+                            <span class="sr-only">Voice Input</span>
+                        </button>
+                    </div>
+                    <div id="symptoms-help" class="help-text">
+                        Be as specific as possible. Include when symptoms started, severity, and any triggers you've noticed.
+                    </div>
+                    <div id="voice-status" class="voice-status" aria-live="polite"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="age">
+                            <i class="fas fa-birthday-cake" aria-hidden="true"></i>
+                            Age (optional)
+                        </label>
+                        <input type="number" id="age" name="age" class="form-control" min="0" max="120" placeholder="e.g., 25" aria-describedby="age-help">
+                        <div id="age-help" class="help-text">Helps provide age-appropriate guidance</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                            Gender (optional)
+                        </label>
+                        <select id="gender" name="gender" class="form-control" aria-describedby="gender-help">
+                            <option value="">Select if you prefer</option>
+                            <option value="female">Female</option>
+                            <option value="male">Male</option>
+                            <option value="non-binary">Non-binary</option>
+                            <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                        <div id="gender-help" class="help-text">Helps provide relevant medical guidance</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="language">
+                        <i class="fas fa-globe" aria-hidden="true"></i>
+                        Language
+                    </label>
+                    <select id="language" name="language" class="form-control" aria-describedby="language-help">
+                        <option value="auto">Auto-detect</option>
+                        <option value="en" selected>English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="pt">Português</option>
+                        <option value="ar">العربية</option>
+                        <option value="hi">हिन्दी</option>
+                        <option value="zh">中文</option>
+                        <option value="ru">Русский</option>
+                        <option value="sw">Kiswahili</option>
+                    </select>
+                    <div id="language-help" class="help-text">Choose your preferred language for the analysis</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large" id="analyze-btn">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    Analyze My Symptoms
+                </button>
+            </form>
+
+            <!-- Medical disclaimer -->
+            <div class="disclaimer" role="contentinfo">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Important Medical Disclaimer</h3>
+                <p>This tool provides general health information only and is <strong>not a substitute for professional medical advice, diagnosis, or treatment</strong>. Always seek the advice of qualified healthcare providers with questions about medical conditions. Never disregard professional medical advice or delay seeking it because of information from this tool.</p>
+                
+                <p><strong>If you have a medical emergency, call your local emergency services immediately:</strong></p>
+                <ul class="emergency-contacts">
+                    <li><strong>United States:</strong> 911</li>
+                    <li><strong>European Union:</strong> 112</li>
+                    <li><strong>United Kingdom:</strong> 999</li>
+                    <li><strong>Australia:</strong> 000</li>
+                    <li><strong>Other countries:</strong> Contact your local emergency services</li>
+                </ul>
+            </div>
+
+            <!-- Features section -->
+            <div class="features-section">
+                <h3>Why Choose MedHelp?</h3>
+                <div class="features-grid">
+                    <div class="feature">
+                        <i class="fas fa-shield-alt feature-icon" aria-hidden="true"></i>
+                        <h4>Complete Privacy</h4>
+                        <p>All processing happens on your device. No data is ever sent to external servers.</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-wifi-slash feature-icon" aria-hidden="true"></i>
+                        <h4>Works Offline</h4>
+                        <p>No internet connection required once loaded. Perfect for remote areas.</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-universal-access feature-icon" aria-hidden="true"></i>
+                        <h4>Fully Accessible</h4>
+                        <p>Screen reader compatible, voice input, and multi-language support.</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-brain feature-icon" aria-hidden="true"></i>
+                        <h4>AI-Powered</h4>
+                        <p>Uses advanced gpt-oss-120b reasoning model for intelligent analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer" role="contentinfo">
+            <p>&copy; 2025 MedHelp - Built for humanity with gpt-oss-120b. Created for the OpenAI Open Model Hackathon.</p>
+            <p><a href="https://github.com/openai/gpt-oss" target="_blank" rel="noopener">Learn more about gpt-oss models</a></p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

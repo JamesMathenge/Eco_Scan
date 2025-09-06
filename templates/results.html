@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Analysis Results - MedHelp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='medical-icon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .conditions-section {
+            border: 2px solid #e3f2fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9ff;
+        }
+        
+        .condition-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .condition-card.primary {
+            border-color: #2196f3;
+            border-width: 2px;
+            background: #e3f2fd;
+        }
+        
+        .condition-card h4 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+            font-size: 1.1em;
+        }
+        
+        .condition-explanation {
+            color: #555;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        
+        .primary-condition {
+            margin-bottom: 20px;
+        }
+        
+        .primary-condition h3 {
+            color: #1976d2;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 5px;
+        }
+
+        .debug-info {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header" role="banner">
+            <div class="header-content">
+                <img src="{{ url_for('static', filename='medical-icon.svg') }}" alt="Medical stethoscope icon" class="logo" width="48" height="48">
+                <div class="header-text">
+                    <h1 class="title">
+                        <a href="{{ url_for('index') }}" class="home-link">MedHelp</a>
+                    </h1>
+                    <p class="subtitle">Symptom Analysis Results</p>
+                </div>
+            </div>
+        </header>
+
+        <main role="main">
+            {% if analysis.get('error') %}
+                <div class="error-section" role="alert">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    <h2>Analysis Error</h2>
+                    <p>{{ analysis.error }}</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        Try Again
+                    </a>
+                </div>
+            {% else %}
+                <!-- Severity indicator -->
+                <div class="severity-indicator severity-{{ analysis.get('emergency_level', 'moderate') }}" role="alert" aria-live="polite">
+                    {% if analysis.get('emergency_level') == 'high' %}
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        <strong>High Priority:</strong> Consider seeking medical attention promptly
+                    {% elif analysis.get('emergency_level') == 'moderate' %}
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <strong>Moderate Priority:</strong> Monitor symptoms and consider medical consultation
+                    {% else %}
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <strong>Low Priority:</strong> Symptoms appear manageable with self-care
+                    {% endif %}
+                </div>
+
+                <!-- Original symptoms summary -->
+                <div class="results-section">
+                    <h2><i class="fas fa-clipboard-list" aria-hidden="true"></i> Your Symptoms</h2>
+                    <div class="symptom-summary">
+                        <p>"{{ original_symptoms }}"</p>
+                    </div>
+                </div>
+
+                <!-- AI Analysis sections -->
+                {% if analysis.get('symptom_summary') %}
+                <div class="results-section">
+                    <h2><i class="fas fa-search" aria-hidden="true"></i> Symptom Summary</h2>
+                    <div class="content-box">
+                        <p>{{ analysis.symptom_summary }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- DEBUG: Show what's in possible_conditions -->
+                <div class="debug-info">
+                    <strong>Debug - Possible Conditions Data:</strong><br>
+                    Type: {{ analysis.possible_conditions.__class__.__name__ if analysis.possible_conditions else 'None' }}<br>
+                    Value: {{ analysis.possible_conditions }}<br>
+                    Length: {{ analysis.possible_conditions|length if analysis.possible_conditions else 'N/A' }}
+                </div>
+
+                <!-- FIXED POSSIBLE CONDITIONS SECTION -->
+                {% if analysis.get('possible_conditions') %}
+                <div class="results-section conditions-section">
+                    <h2><i class="fas fa-diagnoses" aria-hidden="true"></i> Possible Conditions</h2>
+                    
+                    <!-- Check if it's a list/array -->
+                    {% if analysis.possible_conditions is sequence and analysis.possible_conditions is not string %}
+                        
+                        <!-- Show conditions as numbered list -->
+                        {% for condition in analysis.possible_conditions %}
+                            <div class="condition-card {% if loop.first %}primary{% endif %}">
+                                {% if loop.first %}
+                                    <h4><i class="fas fa-star" aria-hidden="true"></i> Most Likely: {{ condition }}</h4>
+                                {% else %}
+                                    <h4>{{ loop.index }}. {{ condition }}</h4>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        
+                    {% else %}
+                        <!-- Fallback: treat as single string and try to parse it -->
+                        <div class="content-box">
+                            {% set conditions_text = analysis.possible_conditions %}
+                            
+                            <!-- Try to split by common delimiters -->
+                            {% if '1.' in conditions_text or '2.' in conditions_text %}
+                                <!-- Numbered list format -->
+                                {% set conditions_lines = conditions_text.split('\n') %}
+                                {% for line in conditions_lines %}
+                                    {% if line.strip() %}
+                                        <div class="condition-card">
+                                            <h4>{{ line.strip() }}</h4>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif '-' in conditions_text %}
+                                <!-- Bulleted list format -->
+                                {% set conditions_lines = conditions_text.split('-') %}
+                                {% for line in conditions_lines %}
+                                    {% if line.strip() %}
+                                        <div class="condition-card">
+                                            <h4>{{ line.strip() }}</h4>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <!-- Single condition or unformatted text -->
+                                <div class="condition-card primary">
+                                    <h4>{{ conditions_text }}</h4>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                    <!-- Show message if no conditions found -->
+                    <div class="results-section">
+                        <h2><i class="fas fa-diagnoses" aria-hidden="true"></i> Possible Conditions</h2>
+                        <div class="content-box">
+                            <p><em>No specific conditions identified. Please consult with a healthcare provider for proper evaluation.</em></p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Condition Details (if available from enhanced analyzer) -->
+                {% if analysis.get('condition_details') %}
+                <div class="results-section">
+                    <h2><i class="fas fa-info-circle" aria-hidden="true"></i> Condition Details</h2>
+                    <div class="content-box">
+                        <p>{{ analysis.condition_details | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if analysis.get('immediate_actions') %}
+                <div class="results-section priority-section">
+                    <h2><i class="fas fa-exclamation" aria-hidden="true"></i> Immediate Actions</h2>
+                    <div class="content-box highlight-box">
+                        <p>{{ analysis.immediate_actions | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if analysis.get('when_to_seek_care') %}
+                <div class="results-section">
+                    <h2><i class="fas fa-hospital" aria-hidden="true"></i> When to Seek Medical Care</h2>
+                    <div class="content-box">
+                        <p>{{ analysis.when_to_seek_care | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if analysis.get('self_care') %}
+                <div class="results-section">
+                    <h2><i class="fas fa-heart" aria-hidden="true"></i> Self-Care Suggestions</h2>
+                    <div class="content-box">
+                        <p>{{ analysis.self_care | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if analysis.get('red_flags') %}
+                <div class="results-section warning-section">
+                    <h2><i class="fas fa-flag" aria-hidden="true"></i> Warning Signs</h2>
+                    <div class="content-box warning-box">
+                        <p><strong>Seek immediate medical attention if you experience:</strong></p>
+                        <p>{{ analysis.red_flags | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Follow-up section (if available from enhanced analyzer) -->
+                {% if analysis.get('follow_up') %}
+                <div class="results-section">
+                    <h2><i class="fas fa-calendar-check" aria-hidden="true"></i> Follow-up</h2>
+                    <div class="content-box">
+                        <p>{{ analysis.follow_up | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Emergency contact info -->
+                <div class="results-section emergency-contacts-section">
+                    <h2><i class="fas fa-phone" aria-hidden="true"></i> Emergency Contacts</h2>
+                    <div class="content-box">
+                        <ul class="emergency-contacts">
+                            <li><strong>Emergency Services:</strong> 911 (US), 112 (EU), 999 (UK), 000 (AU)</li>
+                            <li><strong>Poison Control:</strong> 1-800-222-1222 (US)</li>
+                            <li><strong>Crisis Line:</strong> 988 (US Mental Health Crisis)</li>
+                            <li><strong>Non-Emergency Medical:</strong> Contact your primary care provider</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="action-buttons">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        New Analysis
+                    </a>
+                    <button onclick="window.print()" class="btn btn-secondary">
+                        <i class="fas fa-print" aria-hidden="true"></i>
+                        Print Results
+                    </button>
+                </div>
+
+                <!-- Model information -->
+                {% if analysis.get('model_info') %}
+                <div class="model-info">
+                    <h3><i class="fas fa-info-circle" aria-hidden="true"></i> Analysis Information</h3>
+                    <p><strong>Model:</strong> {{ analysis.model_info.model }}</p>
+                    <p><strong>Privacy:</strong> {{ analysis.model_info.privacy }}</p>
+                    {% if analysis.get('timestamp') %}
+                        <p><strong>Analysis Time:</strong> {{ analysis.timestamp }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Medical disclaimer -->
+            <div class="disclaimer" role="contentinfo">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Important Medical Disclaimer</h3>
+                {% if analysis.get('disclaimer') %}
+                    <p>{{ analysis.disclaimer }}</p>
+                {% else %}
+                    <p>This analysis provides general health information only and is <strong>not a substitute for professional medical advice, diagnosis, or treatment</strong>. Always seek the advice of qualified healthcare providers with questions about medical conditions. Never disregard professional medical advice or delay seeking it because of information from this tool.</p>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer class="footer" role="contentinfo">
+            <p>&copy; 2025 MedHelp - Built for humanity with gpt-oss-20b. Created for the OpenAI Open Model Hackathon.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

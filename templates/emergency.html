@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMERGENCY - Seek Immediate Medical Attention - MedHelp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='medical-icon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { 
+            background-color: #fee; 
+        }
+        .emergency-header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            border: 3px solid #dc3545;
+        }
+        .emergency-header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .emergency-calls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .emergency-call {
+            background: #dc3545;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .emergency-call a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        .emergency-call:hover {
+            background: #c82333;
+        }
+        .blinking {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emergency-header blinking" role="alert" aria-live="assertive">
+            <h1><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> MEDICAL EMERGENCY</h1>
+            <p style="font-size: 1.5rem; margin: 0;">Your symptoms may require immediate medical attention</p>
+        </div>
+
+        <main role="main">
+            <div class="results-section priority-section">
+                <h2 style="color: #dc3545;"><i class="fas fa-ambulance" aria-hidden="true"></i> CALL EMERGENCY SERVICES NOW</h2>
+                
+                <div class="emergency-calls">
+                    <div class="emergency-call">
+                        <a href="tel:911" aria-label="Call 911 for emergency">
+                            <i class="fas fa-phone" aria-hidden="true"></i><br>
+                            🇺🇸 United States<br>
+                            <strong>CALL 911</strong>
+                        </a>
+                    </div>
+                    <div class="emergency-call">
+                        <a href="tel:112" aria-label="Call 112 for emergency">
+                            <i class="fas fa-phone" aria-hidden="true"></i><br>
+                            🇪🇺 European Union<br>
+                            <strong>CALL 112</strong>
+                        </a>
+                    </div>
+                    <div class="emergency-call">
+                        <a href="tel:999" aria-label="Call 999 for emergency">
+                            <i class="fas fa-phone" aria-hidden="true"></i><br>
+                            🇬🇧 United Kingdom<br>
+                            <strong>CALL 999</strong>
+                        </a>
+                    </div>
+                    <div class="emergency-call">
+                        <a href="tel:000" aria-label="Call 000 for emergency">
+                            <i class="fas fa-phone" aria-hidden="true"></i><br>
+                            🇦🇺 Australia<br>
+                            <strong>CALL 000</strong>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="content-box warning-box" style="border: 3px solid #dc3545;">
+                    <h3 style="color: #dc3545;">⚠️ IMMEDIATE ACTION REQUIRED</h3>
+                    <ul style="font-size: 1.1rem; font-weight: bold;">
+                        <li>🚨 <strong>Call emergency services immediately</strong></li>
+                        <li>🏥 <strong>Go to the nearest emergency room</strong></li>
+                        <li>👥 <strong>Ask someone to stay with you</strong></li>
+                        <li>📝 <strong>Bring a list of your medications</strong></li>
+                        <li>🆔 <strong>Bring identification and insurance information</strong></li>
+                    </ul>
+                </div>
+
+                {% if analysis and analysis.get('red_flags') %}
+                <div class="content-box">
+                    <h3><i class="fas fa-flag" aria-hidden="true"></i> Warning Signs Detected</h3>
+                    <p>{{ analysis.red_flags }}</p>
+                </div>
+                {% endif %}
+
+                {% if analysis and analysis.get('immediate_actions') %}
+                <div class="content-box">
+                    <h3><i class="fas fa-first-aid" aria-hidden="true"></i> While Waiting for Help</h3>
+                    <p>{{ analysis.immediate_actions }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Additional emergency resources -->
+            <div class="results-section">
+                <h2><i class="fas fa-life-ring" aria-hidden="true"></i> Additional Emergency Resources</h2>
+                <div class="content-box">
+                    <ul class="emergency-contacts" style="font-size: 1.1rem;">
+                        <li><strong>Poison Control:</strong> 
+                            <a href="tel:1-800-222-1222" style="color: #dc3545; font-weight: bold;">1-800-222-1222</a> (US)
+                        </li>
+                        <li><strong>Mental Health Crisis:</strong> 
+                            <a href="tel:988" style="color: #dc3545; font-weight: bold;">988</a> (US)
+                        </li>
+                        <li><strong>Domestic Violence:</strong> 
+                            <a href="tel:1-800-799-7233" style="color: #dc3545; font-weight: bold;">1-800-799-7233</a> (US)
+                        </li>
+                        <li><strong>Non-Emergency Medical Advice:</strong> Contact your healthcare provider's after-hours line</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Signs that warrant emergency care -->
+            <div class="results-section">
+                <h2><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> When to Call Emergency Services</h2>
+                <div class="content-box">
+                    <p><strong>Call immediately if experiencing:</strong></p>
+                    <ul>
+                        <li>Chest pain or pressure</li>
+                        <li>Difficulty breathing or shortness of breath</li>
+                        <li>Severe allergic reactions</li>
+                        <li>Signs of stroke (face drooping, arm weakness, speech difficulty)</li>
+                        <li>Severe bleeding that won't stop</li>
+                        <li>Loss of consciousness</li>
+                        <li>Severe burns</li>
+                        <li>Suspected poisoning or overdose</li>
+                        <li>Suicidal thoughts or intent to harm yourself or others</li>
+                        <li>Severe head injury</li>
+                        <li>Sudden severe headache unlike any before</li>
+                        <li>High fever with confusion or difficulty breathing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="tel:911" class="btn" style="background: #dc3545; color: white; font-size: 1.2rem; padding: 1rem 2rem;">
+                    <i class="fas fa-phone" aria-hidden="true"></i>
+                    CALL 911 NOW
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    Back to Symptom Checker
+                </a>
+            </div>
+
+            <!-- Disclaimer for emergency page -->
+            <div class="disclaimer" role="contentinfo" style="border: 2px solid #dc3545;">
+                <h3><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Emergency Disclaimer</h3>
+                <p><strong>This is not emergency medical care.</strong> If you are experiencing a medical emergency, call your local emergency services immediately. This tool cannot replace professional emergency medical assessment and treatment.</p>
+            </div>
+        </main>
+
+        <footer class="footer" role="contentinfo">
+            <p>&copy; 2025 MedHelp - Emergency guidance powered by gpt-oss-120b</p>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-focus on emergency call button for accessibility
+        document.addEventListener('DOMContentLoaded', function() {
+            const emergencyButton = document.querySelector('.emergency-call a');
+            if (emergencyButton) {
+                emergencyButton.focus();
+            }
+        });
+    </script>
+</body>
+</html>
